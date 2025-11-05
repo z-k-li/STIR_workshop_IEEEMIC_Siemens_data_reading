@@ -1,0 +1,37 @@
+OSMAPOSLParameters :=
+; OSEM (5 subsets)
+
+objective function type:= PoissonLogLikelihoodWithLinearModelForMeanAndProjData
+PoissonLogLikelihoodWithLinearModelForMeanAndProjData Parameters:=
+
+input file := prompts.hs 
+
+; additive projection data
+additive sinogram := additive_term.hs 
+
+projector pair parameters:=
+; example file specifying a projector pair using the parallelproj projectors
+projector pair type := parallelproj
+  Projector Pair Using Parallelproj Parameters:=
+  End Projector Pair Using Parallelproj Parameters:=
+End projector pair parameters:=
+
+use time-of-flight sensitivities := 1
+
+; norm and acf
+Bin Normalisation type := From ProjData
+  Bin Normalisation From ProjData := 
+  normalisation projdata filename:= mult_factors_forSTIR.hs
+  End Bin Normalisation From ProjData:=
+
+zoom := 0.5
+
+end PoissonLogLikelihoodWithLinearModelForMeanAndProjData Parameters:=
+
+initial estimate:= initial_image_1_Vision.hv
+output filename prefix := OSEM
+number of subsets:= 5
+number of subiterations:= 20
+save estimates at subiteration intervals:= 10
+
+END :=
