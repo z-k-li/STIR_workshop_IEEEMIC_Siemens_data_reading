@@ -46,12 +46,14 @@ import Visiondata_preprocess_functions as vpf
 ##### remove line "!image duration (sec):=1200..."
 
 #%%
-data_folder_PATH = 'data/Vision_Hackathon_corrAddTerm'
+
+## Your own file folder path here
+data_folder_PATH = './Hoffman_phantom_raw_data_for_workshop'
 
 apply_DOI_adaption = False
 
 ####### existing files #######
-prompts_header_filename = '221124NEMAwCoil_AC_CT_WB_GT-00-sino_uncompr_00.s.hdr'
+prompts_header_filename = 'uncompressed_emission_00.s.hdr' #Uncompressed prompts header
 mu_map_header = 'umap_00.h33' # the *.h33 header
 randoms_data_filename = 'smoothed_rand_00.s'
 scatter_2D_header_filename = 'scatter_520_2D_00_00.s.hdr'
@@ -117,22 +119,6 @@ if apply_DOI_adaption: vpf.DOI_adaption(prompts_from_e7, 10)
 prompts_from_e7.write_to_file(os.path.join(STIR_output_folder, prompts_filename_STIR_corr_DOI))
 # prompts_from_e7.write_to_file('prompts.hs')
 
-#%%
-###################### NON-TOF TEMPLATE ############################
-## you might need a non-TOF sinogram with the same geometry (for attenuation factors e.g.)
-## so we're creatiing one here
-proj_info = prompts_from_e7.get_proj_data_info()
-nonTOF_proj_info = proj_info.create_non_tof_clone()
-nonTOFtemplate=stir.ProjDataInterfile(prompts_from_e7.get_exam_info(), nonTOF_proj_info, os.path.join(STIR_output_folder,nonTOF_template_sinogram_name))
-
-#%%
-######## select display variables
-central_slice = proj_info.get_num_axial_poss(0)//2
-TOF_bin = proj_info.get_num_tof_poss()//2
-view = proj_info.get_num_views()//2
-# to draw line-profiles, we'll average over a few slices, specify how many:
-thickness_half = 5
-
 # %%
 ###################### MU-MAP ############################
 ## to read in the mu-map, we have to convert the Siemens *.h33 header to STIR *.hv header via a STIR -script
@@ -155,6 +141,22 @@ plt.figure()
 vpf.plot_2d_image([1,1,1],mu_map_arr[mu_map_arr.shape[0]//2,:,:],'mu-map')
 plt.savefig(os.path.join(STIR_output_folder,'mu_map.png'), transparent=False, facecolor='w')
 plt.show()
+
+#%%
+###################### NON-TOF TEMPLATE ############################
+## you might need a non-TOF sinogram with the same geometry (for attenuation factors e.g.)
+## so we're creatiing one here
+proj_info = prompts_from_e7.get_proj_data_info()
+nonTOF_proj_info = proj_info.create_non_tof_clone()
+nonTOFtemplate=stir.ProjDataInterfile(prompts_from_e7.get_exam_info(), nonTOF_proj_info, os.path.join(STIR_output_folder,nonTOF_template_sinogram_name))
+
+#%%
+######## select display variables
+central_slice = proj_info.get_num_axial_poss(0)//2
+TOF_bin = proj_info.get_num_tof_poss()//2
+view = proj_info.get_num_views()//2
+# to draw line-profiles, we'll average over a few slices, specify how many:
+thickness_half = 5
 
 
 # %%
@@ -308,7 +310,7 @@ acf_sino.fill(expanded_arr.flat)
 afs = np.divide(1,expanded_arr)
 for i in range(33):
     plt.figure()
-    vpf.plot_2d_image([1,1,1],afs[i, central_slice,:,:],'afs, TOF bin {}'.format(i))
+    vpf.plot_2d_image([1,1,1],expanded_arr[i, central_slice,:,:],'acfs, TOF bin {}'.format(i))
     plt.show()
 
 #%%
@@ -368,7 +370,6 @@ plt.suptitle('Lineprofiles - Avg over 10 central slices')
 plt.savefig(os.path.join(STIR_output_folder,'additive_term_lineprofiles.png'), transparent=False, facecolor='w')
 plt.tight_layout()
 
-#!!! Question 4: What do we expect to see?
 # %%
 #### PLOT BACKGROUND TERM
 #### draw line-profiles to check if all's correct
