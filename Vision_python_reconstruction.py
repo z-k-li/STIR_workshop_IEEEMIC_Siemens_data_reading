@@ -211,13 +211,14 @@ bwd = pair.get_back_projector()
 plot_projdata_segment(projdata, 0, filename="measured")
 
 #%% =========================== calculate sensitivity =====================================
-mult_projdata = stir.ProjDataInMemory.read_from_file(mult_projdata_filename)
+estimate = stir.ProjDataInMemory(exam_info, projinfo)
+estimate.fill(1.0)
 add_projdata = stir.ProjDataInMemory.read_from_file(add_projdata_filename)
 new_img = old_img.get_empty_copy()
 new_img.fill(0)
 for subset_num in range(num_subset):
-	bwd.back_project(new_img, mult_projdata, subset_num, num_subset)
-	new_img.write_to_file(f"sens_{subset_num}.hs")
+	bwd.back_project(new_img, estimate, subset_num, num_subset)
+	new_img.write_to_file(f"sens_{subset_num}.hv")
 	sens[subset_num] += stirextra.to_numpy(new_img)
 
 #%%
@@ -240,6 +241,7 @@ quotient.fill(0.0)
 old_img.fill(1)
 num_subiter = 1
 while num_subiter <= num_subiteration:
+	print(f"Performing Reconstruction for Iteration: {num_subiter}")
 	for subset_num in range(num_subset):
 		#estimate.fill(0.0)
 		# optional: choose subsets (here whole data as one subset)
@@ -256,11 +258,11 @@ while num_subiter <= num_subiteration:
 		# --- backprojection of a ratio r = y / A*(X*x_{n}) + A^{-1}*s ---
 		numerator 			= stirextra.to_numpy(projdata)
 		estimated_np   		= stirextra.to_numpy(estimate)
-		add_factor_np 		= stirextra.to_numpy(add_projdata)
-		mult_projdata_np 	= stirextra.to_numpy(mult_projdata)
-		denominator 		= mult_projdata_np*estimated_np + add_factor_np
+		#add_factor_np 		= stirextra.to_numpy(add_projdata)
+		#mult_projdata_np 	= stirextra.to_numpy(mult_projdata)
+		denominator 		= estimated_np
 		# Safe division: ratio = projdata / estimate, set 0 where denominator == 0
-		quotient_np = np.zeros_like(numerator, dtype=np.float32)                      
+		quotient_np = np.ones_like(numerator, dtype=np.float32)                      
 		np.divide(numerator, denominator, out=quotient_np, where=denominator != 0)   # safe divide
 		quotient.fill(quotient_np.flat)
 		plot_projdata_segment(quotient, 0, filename="quotient")
@@ -285,8 +287,10 @@ while num_subiter <= num_subiteration:
 		affine = np.diag([voxel_size_stir.x(), voxel_size_stir.y(), voxel_size_stir.z(), 1.0])
 		affine[:3, 3] = [origin.x(), origin.y(), origin.z()]
   
-		import nibabel as nib
 		nifti_img = nib.Nifti1Image(new_img_np_xyz, affine)
 		nib.save(nifti_img, f"{out_filename_prefix}_{num_subiter}.nii")
 		num_subiter +=1
+  
+  
+		
 # %%
