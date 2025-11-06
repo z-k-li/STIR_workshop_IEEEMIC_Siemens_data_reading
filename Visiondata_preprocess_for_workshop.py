@@ -117,7 +117,6 @@ if apply_DOI_adaption: vpf.DOI_adaption(prompts_from_e7, 10)
 
 ## write to file so you can use it later
 prompts_from_e7.write_to_file(os.path.join(STIR_output_folder, prompts_filename_STIR_corr_DOI))
-# prompts_from_e7.write_to_file('prompts.hs')
 
 # %%
 ###################### MU-MAP ############################
@@ -156,7 +155,7 @@ central_slice = proj_info.get_num_axial_poss(0)//2
 TOF_bin = proj_info.get_num_tof_poss()//2
 view = proj_info.get_num_views()//2
 # to draw line-profiles, we'll average over a few slices, specify how many:
-thickness_half = 5
+thickness_half = 10
 
 
 # %%
@@ -217,7 +216,7 @@ randoms = stir.ProjData.read_from_file(randoms_header_to_read_withSTIR)
 if apply_DOI_adaption: vpf.DOI_adaption(randoms, 10)
 randoms.write_to_file(os.path.join(STIR_output_folder,randoms_adapted_DOI_filename))
 randoms_arr = stirextra.to_numpy(randoms)
-
+#%%
 for i in range(33):
     plt.figure()
     vpf.plot_2d_image([1,1,1],randoms_arr[i, central_slice,:,:],'randoms, TOF bin {}'.format(i))
@@ -245,6 +244,7 @@ stir.inverse_SSRB(scatter_3D_normalized, scatter_2D_normalized)
 #%%
 # plot to see if it worked
 scatter_3D_norm_arr = stirextra.to_numpy(scatter_3D_normalized)
+#%%
 for i in range(33):
     plt.figure()
     vpf.plot_2d_image([1,1,1],scatter_3D_norm_arr[i, central_slice,:,:],'scatter, normalized, TOF bin {}'.format(i))
@@ -260,9 +260,10 @@ de.apply(scatter_3D_unnormalized)
 scatter_3D_unnormalized.write_to_file(os.path.join(STIR_output_folder,scatter_3D_unnorm_filename))
 #%%
 scatter_3D_unnormalized_arr = stirextra.to_numpy(scatter_3D_unnormalized)
+#%%
 for i in range(33):
     plt.figure()
-    vpf.plot_2d_image([1,1,1],scatter_3D_unnormalized_arr[i, central_slice,:,:],'scatter, unnormalized, TOF bin {}'.format(i))
+    vpf.plot_2d_image([1,1,1],scatter_3D_norm_arr[i, central_slice,:,:],'scatter, unnormalized, TOF bin {}'.format(i))
     plt.show()
 
 #!!! Question 3: What do we expect to see if we check as question 1?
@@ -308,6 +309,7 @@ acf_sino.fill(expanded_arr.flat)
 #%%
 ###################### ATTENUATION FACTORS ############################
 afs = np.divide(1,expanded_arr)
+#%%
 for i in range(33):
     plt.figure()
     vpf.plot_2d_image([1,1,1],expanded_arr[i, central_slice,:,:],'acfs, TOF bin {}'.format(i))
@@ -323,7 +325,7 @@ add_sino.write_to_file(os.path.join(STIR_output_folder,additive_term_filename_fS
 #%%
 # let's see what it looks like
 additive_term_arr = stirextra.to_numpy(add_sino)
-
+#%%
 for i in range(33):
     plt.figure()
     vpf.plot_2d_image([1,1,1],additive_term_arr[i, central_slice,:,:],'additive term, TOF bin {}'.format(i))
@@ -356,6 +358,7 @@ norm.apply(prompts_precorr_f_multi_fact)
 prompts_precorr_arr = stirextra.to_numpy(prompts_precorr_f_multi_fact)
 additive_term_arr = stirextra.to_numpy(add_sino)
 
+#%%
 fig, ax = plt.subplots(figsize = (8,6))
 
 ax.plot(np.mean(prompts_precorr_arr[TOF_bin, central_slice-thickness_half:central_slice+thickness_half, 0, :], axis=(0)), label='Prompts, pre-corrected f. multi. factors')
@@ -373,31 +376,39 @@ plt.tight_layout()
 # %%
 #### PLOT BACKGROUND TERM
 #### draw line-profiles to check if all's correct
-prompts_arr = stirextra.to_numpy(prompts_from_e7)
-BG_arr = scatter_3D_unnormalized_arr + randoms_arr
+# prompts_arr = stirextra.to_numpy(prompts_from_e7)
+# BG_arr = scatter_3D_unnormalized_arr + randoms_arr
 
-#%%
-fig, ax = plt.subplots(figsize = (8,6))
+# #%%
+# fig, ax = plt.subplots(figsize = (8,6))
 
-ax.plot(np.mean(prompts_arr[TOF_bin, central_slice-thickness_half:central_slice+thickness_half, 0, :], axis=(0)), label='Prompts')
-ax.plot(np.mean(BG_arr[TOF_bin, central_slice-thickness_half:central_slice+thickness_half, 0, :], axis=(0)), label='BG term')
+# ax.plot(np.mean(prompts_arr[TOF_bin, central_slice-thickness_half:central_slice+thickness_half, 0, :], axis=(0)), label='Prompts')
+# ax.plot(np.mean(BG_arr[TOF_bin, central_slice-thickness_half:central_slice+thickness_half, 0, :], axis=(0)), label='BG term')
 
-ax.set_xlabel('Radial distance (bin)')
-ax.set_ylabel('total counts')
-ax.set_title('TOF bin:' + str(TOF_bin))
-ax.legend()
-plt.tight_layout()
-plt.suptitle('Lineprofiles - Avg over 10 central slices')
-plt.savefig(os.path.join(STIR_output_folder,'BG_term_lineprofiles.png'), transparent=False, facecolor='w')
-plt.tight_layout()
+# ax.set_xlabel('Radial distance (bin)')
+# ax.set_ylabel('total counts')
+# ax.set_title('TOF bin:' + str(TOF_bin))
+# ax.legend()
+# plt.tight_layout()
+# plt.suptitle('Lineprofiles - Avg over 10 central slices')
+# plt.savefig(os.path.join(STIR_output_folder,'BG_term_lineprofiles.png'), transparent=False, facecolor='w')
+# plt.tight_layout()
+
 # %%
 # Answer_question_1
 prompts_arr = stirextra.to_numpy(prompts_from_e7)
 print(np.sum(prompts_arr))
 # Check the nonTOF prompt sinograms first
+# %%
 prompt_nonTOF = np.sum(prompts_arr, axis=0)
-plt.imshow(prompt_nonTOF[0:644,0,:])
+# %%
+plt.imshow(prompt_nonTOF[0:159,0,:])
 plt.clim([0,np.max(prompt_nonTOF)/10])
+# %%
+scatter_nonTOF = np.sum(scatter_3D_norm_arr, axis=0)
+# %%
+plt.imshow(scatter_nonTOF[0:159,0,:])
+# plt.clim([0,np.max(prompt_nonTOF)/10])
 
 #%%
 # Answer_question_2
